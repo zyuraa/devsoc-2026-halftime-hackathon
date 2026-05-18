@@ -1,0 +1,1 @@
+# devsoc-2026-halftime-hackathon
