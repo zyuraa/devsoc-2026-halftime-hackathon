@@ -22,7 +22,7 @@ class Gym:
 class Group:
     def __init__(self, id, gym, time_start, time_end, members):
         self.id = id
-        self.gym = gym
+        self.gym = gym  # name not actual gym object
         self.time_start = time_start
         self.time_end = time_end
         self.members = members
