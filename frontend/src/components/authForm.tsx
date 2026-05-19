@@ -45,9 +45,9 @@ export default function AuthForm({
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-100">
-      <h1 className="text-3xl font-bold text-white mb-6 text-centre">
-        placeholder
+    <div className="min-h-screen flex flex-col bg-stone-100 items-center">
+      <h1 className="text-3xl font-bold text-white mb-6 text-center">
+        kiloGram
       </h1>
 
       <form

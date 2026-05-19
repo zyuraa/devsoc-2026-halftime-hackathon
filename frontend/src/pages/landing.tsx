@@ -18,12 +18,12 @@ export default function LandingPage() {
           <a href="/" className="flex items-center">
             <img src={logo} className="h-6 mr-3 sm:h-9" alt="Placeholder Logo" />
             <span className="self-center text-xl font-semibold whitespace-nowrap">
-              Placeholder
+              kiloGram
             </span>
           </a>
         </div>
       <h2>
-        WELCOME TO PLACEHOLDER
+        WELCOME TO KILOGRAM
       </h2>
 
 
