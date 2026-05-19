@@ -44,9 +44,7 @@ def search_gyms(longitude, latitude, limit=10, radius_km=5):
     response = requests.get(url, params=params)
 
     if response.status_code != 200:
-        print("Error:", response.status_code)
-        print(response.text)
-        return []
+        raise Exception(f"Mapbox API error {response.status_code}: {response.text}")        
 
     data = response.json()
 
