@@ -6,7 +6,9 @@ export default function RegisterPage() {
 
   const registerUser = async (
     email: string,
-    password: string
+    password: string,
+    age: string = "",
+    name: string = ""
   ) => {
 
     try {
@@ -16,8 +18,10 @@ export default function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
-          password,
+          "email": email,
+          "password": password,
+          "age": age,
+          "name": name
         }),
       });
 
@@ -35,12 +39,12 @@ export default function RegisterPage() {
 
   return (
     <div>
-          <AuthForm
-            mode="register"
-            title="Register"
-            buttonText="Create Account"
-            onSubmit={registerUser}
-          />
-        </div>
+        <AuthForm
+          mode="register"
+          title="Register"
+          buttonText="Create Account"
+          onSubmit={registerUser}
+        />
+      </div>
   );
 }

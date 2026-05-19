@@ -35,7 +35,9 @@ export default function ProfileDropdown({
         >
           <div>
             <strong>{name}</strong>
-            
+          </div>
+
+          <div>
             {email}
           </div>
 

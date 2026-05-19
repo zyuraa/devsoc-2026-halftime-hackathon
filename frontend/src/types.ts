@@ -13,7 +13,7 @@ export type Member = {
 
 export type Group = {
   id: string;
-  gymName: string;
+  gym: string;
   timeStart: string; // ISO string
   timeEnd: string;
   members: Member[];

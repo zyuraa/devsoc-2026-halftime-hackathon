@@ -59,6 +59,8 @@ export default function GymSearcher() {
     radius: number
   ) => {
 
+    console.log(latitude, longitude, limit, radius);
+
     try {
       const response = await fetch(`http://localhost:8000/${id}/search`, {
         method: "POST",
@@ -66,15 +68,16 @@ export default function GymSearcher() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          longitude,
-          latitude,
-          limit,
-          radius
+          "longitude": longitude,
+          "latitude": latitude,
+          "limit": limit,
+          "radius": radius
         }),
       });
 
       const data = await response.json();
-      setGyms(data);
+      console.log(data);
+      setGyms(data.gyms);
 
       console.log("Server response:", data);
 
@@ -86,118 +89,125 @@ export default function GymSearcher() {
   const navigate = useNavigate();
 
   const selectGym = (gymId: string) => {
-    navigate(`/home/${id}/gyms/${gymId}`);
+    navigate(`/${id}/gym/${gymId}`);
   };
 
   return (
-    <div className="w-full h-screen relative">
+    <div className="w-200 min-h-screen flex flex-col items-center gap-4 p-4 bg-white rounded-2xl">
       <h2 className="text-center">
         Enter location to search for gyms!
       </h2>
 
-      <div>
-        <input type="range" 
-          min='0' 
-          max="50" 
-          step='1' 
-          value={radius}
-          className='slider' 
-          id="myRange" 
-          onChange={(e)=> {
-            setRadius(Number(e.target.value))
-          }}/>
-        <p>
-          {radius}km
-        </p>
+      <div className="flex gap-8 items-center">
+        <div>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={numGyms}
+            onChange={(e) =>
+              setNumGyms(Number(e.target.value))
+            }
+            className="accent-blue-500"
+          />
+          <p>
+            Search for max {numGyms} gyms
+          </p>
+        </div>
+
+        <div>
+          <input type="range" 
+            min='1' 
+            max="50" 
+            step='1' 
+            value={radius}
+            className='accent-blue-500' 
+            id="myRange" 
+            onChange={(e)=> {
+              setRadius(Number(e.target.value))
+            }}
+            />
+          <p>
+            Within {radius}km
+          </p>
+        </div>
+
       </div>
 
-      <div>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={numGyms}
-          onChange={(e) =>
-            setNumGyms(Number(e.target.value))
-          }
-          className="accent-blue-500"
-        />
-        <p>
-          Search for {numGyms} gyms
-        </p>
-      </div>
+      <div className="relative w-full h-[500px]">    
+        <div className="absolute z-10 w-96 m-4">
+          <SearchBox
+            accessToken={MAPBOX_TOKEN}
+            options={{
+              proximity: {
+                lng: marker.longitude,
+                lat: marker.latitude,
+              },
+            }}
+            onRetrieve={(res) => {
 
-      <div className="absolute z-10 w-96 m-4">
+              const feature = res.features[0];
 
-        <SearchBox
-          accessToken={MAPBOX_TOKEN}
-          options={{
-            proximity: {
-              lng: marker.longitude,
-              lat: marker.latitude,
-            },
+              const [lng, lat] =
+                feature.geometry.coordinates;
+
+              setMarker({
+                latitude: lat,
+                longitude: lng,
+              });
+
+              mapRef.current?.flyTo({
+                center: [lng, lat],
+                zoom: 14,
+              });
+
+              console.log("Search:", lat, lng);
+            }}
+          />
+        </div>
+        
+        <Map
+          ref={mapRef}
+          mapboxAccessToken={MAPBOX_TOKEN}
+          initialViewState={{
+            latitude: marker.latitude,
+            longitude: marker.longitude,
+            zoom: 12,
           }}
-          onRetrieve={(res) => {
-
-            const feature = res.features[0];
-
-            const [lng, lat] =
-              feature.geometry.coordinates;
-
-            setMarker({
-              latitude: lat,
-              longitude: lng,
-            });
-
-            mapRef.current?.flyTo({
-              center: [lng, lat],
-              zoom: 14,
-            });
-
-            console.log("Search:", lat, lng);
+          mapStyle="mapbox://styles/mapbox/dark-v11"
+          onLoad={() => {
+            mapRef.current?.resize();
           }}
-        />
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+          onClick={clickMap}
+        >
 
+          <Marker
+            latitude={marker.latitude}
+            longitude={marker.longitude}
+          />
+
+        </Map>
       </div>
-
-      <Map
-        ref={mapRef}
-        mapboxAccessToken={MAPBOX_TOKEN}
-        initialViewState={{
-          latitude: marker.latitude,
-          longitude: marker.longitude,
-          zoom: 12,
-        }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
-        style={{
-          width: "75%",
-          height: "50%",
-        }}
-        onClick={clickMap}
-      >
-
-        <Marker
-          latitude={marker.latitude}
-          longitude={marker.longitude}
-        />
-
-      </Map>
-
+      
       <button 
         onClick={() =>
           requestGyms(
             marker.longitude,
             marker.latitude,
-            radius,
+            numGyms,
             radius
           )
         }
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
+        className="w-100 bg-blue-500 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
       >
         Get Gyms
       </button>
 
-      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+      <div className="max-h-[400px] overflow-y-auto">
       <h2>Select a Gym</h2>
 
       {gyms.map((gym) => (
@@ -214,13 +224,9 @@ export default function GymSearcher() {
           }}
         >
           <h3>{gym.name}</h3>
-          {/* {gym.groups !== undefined && (
-            <p>{gym.groups.length} groups available</p>
-          )} */}
-        </div>
-      ))}
-    </div>
-
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
