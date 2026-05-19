@@ -60,13 +60,25 @@ def getUserInfo(id):
             return jsonify({
                 "email": u.email,
                 "name": u.name,
-                "age": u.age,
-                "gender": u.gender
+                "age": u.age
                 })
     return jsonify({"message": "User not found!"}), 404
 # user searches for gyms
 @app.route("/<id>/groups", methods=["GET"])
 # user searches for groups
+# input: gym name, time range
+# output: list of groups matching the criteria
+def search_groups(id):
+    gym_name = request.args.get("gym_name")
+    time_start = request.args.get("time_start")
+    time_end = request.args.get("time_end")
+    matching_groups = []
+    for g in gyms:
+        if g.name == gym_name:
+            for gr in g.groups:
+                if gr.time_start >= time_start and gr.time_end <= time_end:
+                    matching_groups.append(gr)
+    return jsonify({"groups": [gr.id for gr in matching_groups]})
 
 @app.route("/<id>/groups", methods=["POST"])
 def create_group():

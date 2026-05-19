@@ -3,12 +3,11 @@ from enum import Enum
 from flask import Flask, request, jsonify
 
 class User:
-  def __init__(self, email, name, password, age, gender, id):
+  def __init__(self, email, name, password, age, id):
     self.email = email
     self.name = name
     self.password = password
     self.age = age
-    self.gender = gender
     self.id = id
 
 

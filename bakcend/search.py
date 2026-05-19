@@ -1,7 +1,7 @@
 import os
 import requests
 from geopy.distance import geodesic
-from models import Gym
+from bakcend.models import Gym
 from dotenv import load_dotenv
 
 load_dotenv()
