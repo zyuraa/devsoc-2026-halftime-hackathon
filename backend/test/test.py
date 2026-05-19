@@ -1,8 +1,8 @@
 import pytest
 import time
 from datetime import datetime, timedelta
-from backend.app import app, users, gyms
-from backend.app import find_user_by_id
+from app import app, users, gyms
+from app import find_user_by_id
 
 
 @pytest.fixture
