@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
-from models.py import User, Gym, Group
-from services.py import generate_secure_userid, delete_group_after
+from bakcend.models import User, Gym, Group
+from bakcend.services import generate_secure_userid, delete_group_after
+from bakcend.search import search_gyms
 
 
 app = Flask(__name__)
@@ -30,6 +31,39 @@ def login():
     return jsonify({"message": "Invalid credentials!"}), 401
 
 @app.route("/<id>/search", methods=["GET"])
+def search(id):
+    longitude = request.args.get("longitude", type=float)
+    latitude = request.args.get("latitude", type=float)
+    limit = request.args.get("limit", default=10, type=int)
+    radius_km = request.args.get("radius_km", default=5, type=float)
+
+    print("longitude:", longitude)
+    print("latitude:", latitude)
+    print("limit:", limit)
+    print("radius_km:", radius_km)
+
+    found_gyms = search_gyms(
+        longitude=longitude,
+        latitude=latitude,
+        limit=limit,
+        radius_km=radius_km
+    )
+
+    print("found_gyms:", found_gyms)
+
+    return jsonify({"gyms": [gym.name for gym in found_gyms]})
+
+@app.route("/<id>", methods=["GET"])
+def getUserInfo(id):
+    for u in users:
+        if u.id == id:
+            return jsonify({
+                "email": u.email,
+                "name": u.name,
+                "age": u.age
+                "gender": u.gender
+                })
+    return jsonify({"message": "User not found!"}), 404
 # user searches for gyms
 @app.route("/<id>/groups", methods=["GET"])
 # user searches for groups
