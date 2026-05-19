@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from models import User, Gym, Group
 from services import generate_secure_userid, delete_group_after
 from search import search_gyms
@@ -6,6 +7,7 @@ from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 users = [] #temp
 gyms = [] #temp // gym class
 ids = [] #temp
@@ -22,16 +24,16 @@ def find_user_by_id(user_id):
 @app.route("/groups/<gym_id>", methods=["GET"])
 # get groups from gym
 def get_gym_groups(gym_id):
-
     for g in gyms:
+        print(g.name)
         if g.id == gym_id:
             gym_groups = g.groups
             return jsonify({"groups": [
                 {
                     "id": gr.id,
                     "gym": gr.gym,
-                    "time_start": gr.time_start,
-                    "time_end": gr.time_end,
+                    "timeStart": gr.time_start,
+                    "timeEnd": gr.time_end,
                     "members": [
                         {
                             "name": m.name,
@@ -55,8 +57,8 @@ def get_current_groups(id):
                     {
                         "id": gr.id,
                         "gym": gr.gym,
-                        "time_start": gr.time_start,
-                        "time_end": gr.time_end,
+                        "timeStart": gr.time_start,
+                        "timeEnd": gr.time_end,
                         "members": [
                             {
                                     "name": m.name,
@@ -97,12 +99,18 @@ def login():
             return jsonify({"id": u.id, "message": "success"})
     return jsonify({"message": "Invalid credentials!"}), 401
 
-@app.route("/<id>/search", methods=["GET"])
+@app.route("/<id>/search", methods=["POST"])
 def search(id):
-    longitude = request.args.get("longitude", type=float)
-    latitude = request.args.get("latitude", type=float)
-    limit = request.args.get("limit", default=10, type=int)
-    radius_km = request.args.get("radius_km", default=5, type=float)
+    data = request.get_json()
+
+    longitude_val = data.get("longitude")
+    longitude = float(longitude_val) if longitude_val is not None else None
+    latitude_val = data.get("latitude")
+    latitude = float(latitude_val) if latitude_val is not None else None
+    limit_val = data.get("limit")
+    limit = int(limit_val) if limit_val is not None else None
+    radius_val = data.get("radius")
+    radius_km = float(radius_val) if radius_val is not None else None
 
     if longitude is None:
         return jsonify({"error": "Missing longitude"}), 400
@@ -110,10 +118,10 @@ def search(id):
     if latitude is None:
         return jsonify({"error": "Missing latitude"}), 400
 
-    if limit <= 0:
+    if limit is None or limit <= 0:
         return jsonify({"error": "Limit must be greater than 0"}), 400
 
-    if radius_km <= 0:
+    if radius_km is None or radius_km <= 0:
         return jsonify({"error": "Radius must be greater than 0"}), 400
 
     found_gyms = search_gyms(
@@ -130,7 +138,21 @@ def search(id):
     return jsonify({"gyms": [{
         "id": gym.id,
         "name": gym.name,
-        "groups": gym.groups
+        "groups": [
+        {
+            "id": gr.id,
+            "gym": gr.gym,
+            "timeStart": gr.time_start,
+            "timeEnd": gr.time_end,
+            "members": [
+                {
+                    "name": m.name,
+                    "age": m.age
+                }
+                for m in gr.members
+            ]
+        }
+        for gr in gym.groups]
     }                       
         for gym in found_gyms]})
 
@@ -150,8 +172,8 @@ def getUserInfo(id):
 # output: list of groups matching the criteria
 def search_groups(id):
     gym_name = request.args.get("gym_name")
-    time_start = request.args.get("time_start")
-    time_end = request.args.get("time_end")
+    time_start = request.args.get("timeStart")
+    time_end = request.args.get("timeEnd")
 
     if not gym_name:
         return jsonify({"error": "Missing gym_name"}), 400
@@ -172,8 +194,8 @@ def search_groups(id):
         {
             "id": gr.id,
             "gym": gr.gym,
-            "time_start": gr.time_start,
-            "time_end": gr.time_end,
+            "timeStart": gr.time_start,
+            "timeEnd": gr.time_end,
             "members": [
                 {
                     "name": m.name,
@@ -196,10 +218,10 @@ def create_group(id):
     if not data.get("gym"):
         return jsonify({"error": "Missing field: gym"}), 400
 
-    if not data.get("time_start"):
+    if not data.get("timeStart"):
         return jsonify({"error": "Missing field: time_start"}), 400
 
-    if not data.get("time_end"):
+    if not data.get("timeEnd"):
         return jsonify({"error": "Missing field: time_end"}), 400
     
     member_ids = data.get("members", [])
@@ -207,13 +229,16 @@ def create_group(id):
     for member_id in member_ids:
         user = find_user_by_id(member_id)
         if user is not None:
-            members.append(user)
+            members.append({
+                "name": user.name,
+                "age": user.age
+            })
 
     group = Group(
         id=generate_secure_userid(),
         gym=data.get("gym"),
-        time_start=data.get("time_start"),
-        time_end=data.get("time_end"),
+        time_start=data.get("timeStart"),
+        time_end=data.get("timeEnd"),
         members=members
     )
     for g in gyms:
@@ -269,6 +294,13 @@ def delete_group(id, group_id):
                 g.groups.remove(gr)
                 return jsonify({"message": "success"})
     return jsonify({"message": "Group not found!"}), 404
+
+@app.route("/gym/<gym_id>", methods=["GET"])
+def get_gym_name(gym_id):
+    for g in gyms:
+        if g.id == gym_id:
+            return jsonify({"name": g.name})
+    return jsonify({"message": "Gym not found!"}), 404
 
 @app.route("/")
 def home():

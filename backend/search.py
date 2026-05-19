@@ -69,8 +69,8 @@ def search_gyms(longitude, latitude, limit=10, radius_km=5):
                 latitude=gym_lat,
                 longitude=gym_lon,
             )
-
-            gyms.append(gym)
+            if not any(g.id == gym.id for g in gyms):
+                gyms.append(gym)
 
     return gyms
     

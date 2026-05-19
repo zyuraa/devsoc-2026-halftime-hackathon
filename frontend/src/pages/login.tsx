@@ -3,7 +3,6 @@ import AuthForm from '../components/authForm';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-
   const loginUser = async (
     email: string,
     password: string

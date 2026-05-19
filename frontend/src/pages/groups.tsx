@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { Group } from "../types";
+import BackButton from "../components/backButton";
 
 export default function GroupPage() {
   const { id } = useParams<{ id: string }>();
@@ -10,11 +11,10 @@ export default function GroupPage() {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/${id}/groups`);
+        const response = await fetch(`http://localhost:8000/${id}/groups/current`);
         const data = await response.json();
-        // add proper get groups!!!!!!!!!!!!!!!W%!@#$%!#@$%#!@$%!#@$%!#
 
-        setGroups(data);
+        setGroups(data.groups);
       } catch (error) {
         console.error("Error fetching groups:", error);
       } finally {
@@ -30,7 +30,8 @@ export default function GroupPage() {
   }
 
   return (
-    <div>
+    <div className="w-250 min-h-screen flex flex-col items-center gap-4 p-4 bg-white">
+      <BackButton id={id!}/>
       <h1>Your Groups</h1>
 
       {groups.length === 0 ? (
@@ -38,7 +39,7 @@ export default function GroupPage() {
       ) : (
         groups.map((group, index) => (
           <div key={index} style={{ marginBottom: "1rem" }}>
-            <h2>{group.gymName}</h2>
+            <p>{group.gym}</p>
 
             <p>
               Start: {new Date(group.timeStart).toLocaleString()}

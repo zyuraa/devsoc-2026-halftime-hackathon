@@ -59,6 +59,8 @@ export default function GymSearcher() {
     radius: number
   ) => {
 
+    console.log(latitude, longitude, limit, radius);
+
     try {
       const response = await fetch(`http://localhost:8000/${id}/search`, {
         method: "POST",
@@ -66,15 +68,16 @@ export default function GymSearcher() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          longitude,
-          latitude,
-          limit,
-          radius
+          "longitude": longitude,
+          "latitude": latitude,
+          "limit": limit,
+          "radius": radius
         }),
       });
 
       const data = await response.json();
-      setGyms(data);
+      console.log(data);
+      setGyms(data.gyms);
 
       console.log("Server response:", data);
 
@@ -86,7 +89,7 @@ export default function GymSearcher() {
   const navigate = useNavigate();
 
   const selectGym = (gymId: string) => {
-    navigate(`/home/${id}/gym/${gymId}`);
+    navigate(`/${id}/gym/${gymId}`);
   };
 
   return (
@@ -114,7 +117,7 @@ export default function GymSearcher() {
 
         <div>
           <input type="range" 
-            min='0' 
+            min='1' 
             max="50" 
             step='1' 
             value={radius}
@@ -195,7 +198,7 @@ export default function GymSearcher() {
           requestGyms(
             marker.longitude,
             marker.latitude,
-            radius,
+            numGyms,
             radius
           )
         }
@@ -221,9 +224,6 @@ export default function GymSearcher() {
           }}
         >
           <h3>{gym.name}</h3>
-            {/* {gym.groups !== undefined && (
-              <p>{gym.groups.length} groups available</p>
-            )} */}
           </div>
         ))}
       </div>

@@ -17,7 +17,7 @@ export default function HomePage() {
       try {
 
         const response = await fetch(
-          `http://localhost:8000/${id}/user`
+          `http://localhost:8000/${id}`
         );
 
         const data = await response.json();
@@ -42,8 +42,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-stone-100">
       <h1>Welcome</h1>
-      <p>{user?.name}</p>
-      <div className="fixed top-5 right-60">
+      <h2>{user?.name}</h2>
+      <div className="fixed top-5 right-5 bg-slate-50 rounded p-2">
         <ProfileDropdown
           name={user?.name ?? ""}
           email={user?.email ?? ""}
