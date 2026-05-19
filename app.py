@@ -21,6 +21,7 @@ def register():
     )
     users.append(user)
     return jsonify({"id": user.id, "message": "success"})
+
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -63,7 +64,7 @@ def getUserInfo(id):
                 "age": u.age
                 })
     return jsonify({"message": "User not found!"}), 404
-# user searches for gyms
+
 @app.route("/<id>/groups", methods=["GET"])
 # user searches for groups
 # input: gym name, time start, time end
