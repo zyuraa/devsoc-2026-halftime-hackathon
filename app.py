@@ -9,6 +9,52 @@ users = [] #temp
 gyms = [] #temp
 ids = [] #temp
 
+
+@app.route("<gym_id>/groups", methods=["GET"])
+# get groups from gym
+def get_gym_groups(gym_id):
+
+    for g in gyms:
+        if g.id == gym_id:
+            gym_groups = g.groups
+        return jsonify({"groups": [
+            {
+                "id": gr.id,
+                "gym": gr.gym,
+                "time_start": gr.time_start,
+                "time_end": gr.time_end,
+                "members": [
+                    {
+                        "name": m.name,
+                        "age": m.age
+                        }
+                            for m in gr.members
+                ]
+                } for gr in gym_groups]})
+
+@app.route("/<id>/groups/current", methods=["GET"])
+# get groups from user
+def get_current_groups(id):
+    current_groups = []
+    for g in gyms:
+        for gr in g.groups:
+            if id in gr.members:
+                current_groups.append(gr)
+    return jsonify({"groups": [
+                    {
+                        "id": gr.id,
+                        "gym": gr.gym,
+                        "time_start": gr.time_start,
+                        "time_end": gr.time_end,
+                        "members": [
+                            {
+                                    "name": m.name,
+                                    "age": m.age
+                                    }
+                                        for m in gr.members
+                        ]
+                        } for gr in current_groups]})
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -52,14 +98,18 @@ def search(id):
 
     print("found_gyms:", found_gyms)
 
-    return jsonify({"gyms": [gym.name for gym in found_gyms]})
+    return jsonify({"gyms": [{
+        "id": gym.id,
+        "name": gym.name,
+        "groups": gym.groups
+    }                       
+        for gym in found_gyms]})
 
 @app.route("/<id>", methods=["GET"])
 def getUserInfo(id):
     for u in users:
         if u.id == id:
             return jsonify({
-                "email": u.email,
                 "name": u.name,
                 "age": u.age
                 })
@@ -79,7 +129,22 @@ def search_groups(id):
             for gr in g.groups:
                 if gr.time_start >= time_start and gr.time_end <= time_end:
                     matching_groups.append(gr)
-    return jsonify({"groups": [gr.id for gr in matching_groups]})
+    return jsonify({"groups": [
+        {
+            "id": gr.id,
+            "gym": gr.gym,
+            "time_start": gr.time_start,
+            "time_end": gr.time_end,
+            "members": [
+                {
+                    "name": m.name,
+                    "age": m.age
+                }
+                for m in gr.members
+            ]
+        }
+        for gr in matching_groups
+    ]})
 
 @app.route("/<id>/groups", methods=["POST"])
 def create_group():
