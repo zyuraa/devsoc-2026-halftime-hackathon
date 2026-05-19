@@ -1,3 +1,4 @@
-git rm -r --cached .venv
-git add .gitignore
-git commit -m "remove venv from tracking"
+.venv/
+venv/
+__pycache__/
+.env
