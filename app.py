@@ -3,7 +3,7 @@ from models.py import User, Gym
 from services.py import generate_secure_userid
 
 app = Flask(__name__)
-db = [] #temp
+users = [] #temp
 gyms = [] #temp
 ids = [] #temp
 
@@ -17,13 +17,13 @@ def register():
         age=data.get("age"),
         id = generate_secure_userid()
     )
-    db.append(user)
+    users.append(user)
     return jsonify({"id": user.id, "message": "success"})
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     # Add login logic here
-    for u in db:
+    for u in users:
         if u.email == data.get("email") and u.password == data.get("password"):
             return jsonify({"id": u.id, "message": "success"})
     return jsonify({"message": "Invalid credentials!"}), 401
