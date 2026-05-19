@@ -1,0 +1,837 @@
+import pytest
+import time
+from datetime import datetime, timedelta
+from app import app, users, gyms
+from app import find_user_by_id
+
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+
+    users.clear()
+    gyms.clear()
+
+    with app.test_client() as client:
+        yield client
+
+    users.clear()
+    gyms.clear()
+
+# -------------------------
+# Helper functions
+# -------------------------
+
+def register_user(
+    client,
+    email="test@example.com",
+    name="Test User",
+    password="password123",
+    age=20
+):
+    return client.post("/register", json={
+        "email": email,
+        "name": name,
+        "password": password,
+        "age": age
+    })
+
+
+def login_user(client, email="test@example.com", password="password123"):
+    return client.post("/login", json={
+        "email": email,
+        "password": password
+    })
+
+
+def create_group(
+    client,
+    user_id,
+    gym="Anytime Fitness Menai",
+    time_start=None,
+    time_end=None,
+    members=None
+):
+    if members is None:
+        members = [user_id]
+
+    if time_start is None:
+        time_start = datetime.now().isoformat()
+
+    if time_end is None:
+        time_end = (datetime.now() + timedelta(seconds=10)).isoformat()
+
+    return client.post(f"/{user_id}/groups", json={
+        "gym": gym,
+        "time_start": time_start,
+        "time_end": time_end,
+        "members": members
+    })
+
+# Make the gym exist
+def create_gym(client, user_id):
+    return client.get(f"/{user_id}/search", query_string={
+        "longitude": 151,
+        "latitude": -34,
+        "limit": 10,
+        "radius_km": 25
+    }) 
+
+
+def get_group_by_id(groups, group_id):
+    for group in groups:
+        if str(group["id"]) == str(group_id):
+            return group
+    return None
+
+# -------------------------
+# Tests
+# -------------------------
+
+# -------------------------
+# Register / login
+# -------------------------
+
+def test_register_user_success(client):
+    response = register_user(client)
+
+    assert response.status_code in [200, 201]
+
+    data = response.get_json()
+    assert "id" in data
+    assert data["id"] is not None
+
+
+def test_register_missing_email(client):
+    response = client.post("/register", json={
+        "name": "No Email",
+        "password": "password123",
+        "age": 20
+    })
+
+    assert response.status_code in [400, 422]
+
+
+def test_register_missing_password(client):
+    response = client.post("/register", json={
+        "email": "nopassword@example.com",
+        "name": "No Password",
+        "age": 20
+    })
+
+    assert response.status_code in [400, 422]
+
+
+def test_login_success(client):
+    register_user(
+        client,
+        email="login@example.com",
+        name="Login User",
+        password="password123",
+        age=21
+    )
+
+    response = login_user(
+        client,
+        email="login@example.com",
+        password="password123"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert "id" in data
+
+
+def test_login_wrong_password(client):
+    register_user(
+        client,
+        email="wrongpass@example.com",
+        name="Wrong Pass",
+        password="correctpassword",
+        age=22
+    )
+
+    response = login_user(
+        client,
+        email="wrongpass@example.com",
+        password="wrongpassword"
+    )
+
+    assert response.status_code in [401, 403]
+
+
+# -------------------------
+# User info
+# -------------------------
+
+def test_get_user_info_success(client):
+    register_response = register_user(
+        client,
+        email="profile@example.com",
+        name="Profile User",
+        password="password123",
+        age=25
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["email"] == "profile@example.com"
+    assert data["name"] == "Profile User"
+
+
+def test_get_user_info_invalid_id(client):
+    response = client.get("/999999")
+
+    assert response.status_code in [400, 404]
+
+
+# -------------------------
+# Gym search
+# -------------------------
+
+def test_search_gyms_success(client):
+    register_response = register_user(
+        client,
+        email="search@example.com",
+        name="Search User",
+        password="password123",
+        age=23
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}/search", query_string={
+        "longitude": 151,
+        "latitude": -34,
+        "limit": 10,
+        "radius_km": 10
+    })
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    for gym in data["gyms"]:
+        assert isinstance(gym, dict)
+        assert "id" in gym
+        assert "name" in gym
+        assert "groups" in gym
+        assert isinstance(gym["name"], str)
+        assert isinstance(data["gyms"], list)
+        assert len(data["gyms"]) > 0
+
+
+def test_search_gyms_missing_longitude(client):
+    register_response = register_user(
+        client,
+        email="missinglongitude@example.com",
+        name="Missing Longitude",
+        password="password123",
+        age=24
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}/search", query_string={
+        "latitude": -33.8688,
+        "limit": 10,
+        "radius_km": 5
+    })
+
+    assert response.status_code in [400, 422]
+
+
+def test_search_gyms_missing_latitude(client):
+    register_response = register_user(
+        client,
+        email="missinglatitude@example.com",
+        name="Missing Latitude",
+        password="password123",
+        age=24
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}/search", query_string={
+        "longitude": 151.2093,
+        "limit": 10,
+        "radius_km": 5
+    })
+
+    assert response.status_code in [400, 422]
+
+
+# -------------------------
+# Create groups
+# -------------------------
+
+def test_create_group_success(client):
+    register_response = register_user(
+        client,
+        email="creategroup@example.com",
+        name="Create Group User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id]
+    )
+
+    assert response.status_code in [200, 201]
+
+    data = response.get_json()
+    assert "id" in data
+    assert data["id"] is not None
+
+def test_group_is_deleted_after_end_time(client):
+    register_response = register_user(
+        client,
+        email="autodelete@example.com",
+        name="Auto Delete User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    now = datetime.now()
+    time_start = now.isoformat()
+    time_end = (now + timedelta(seconds=2)).isoformat()
+
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        time_start=time_start,
+        time_end=time_end,
+        members=[user_id]
+    )
+
+    assert create_response.status_code in [200, 201]
+
+    group_id = create_response.get_json()["id"]
+
+    # Immediately after creation, the group should exist
+    current_response = client.get(f"/{user_id}/groups/current")
+    assert current_response.status_code == 200
+
+    current_data = current_response.get_json()
+    group = get_group_by_id(current_data["groups"], group_id)
+
+    assert group is not None
+
+    # Wait until after the group's end time
+    time.sleep(3)
+
+    # After the end time, the group should be gone
+    current_response = client.get(f"/{user_id}/groups/current")
+    assert current_response.status_code == 200
+
+    current_data = current_response.get_json()
+    group = get_group_by_id(current_data["groups"], group_id)
+
+    assert group is None
+
+
+def test_create_group_missing_gym(client):
+    register_response = register_user(
+        client,
+        email="nogym@example.com",
+        name="No Gym User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.post(f"/{user_id}/groups", json={
+        "time_start": "2026-06-01T18:00:00",
+        "time_end": "2026-06-01T19:00:00",
+        "members": [user_id]
+    })
+
+    assert response.status_code in [400, 422]
+
+
+def test_create_group_missing_time_start(client):
+    register_response = register_user(
+        client,
+        email="notimestart@example.com",
+        name="No Time Start User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.post(f"/{user_id}/groups", json={
+        "gym": "Anytime Fitness",
+        "time_end": "2026-06-01T19:00:00",
+        "members": [user_id]
+    })
+
+    assert response.status_code in [400, 422]
+
+
+# -------------------------
+# Search groups by user
+# -------------------------
+
+def test_search_groups_finds_created_group(client):
+    register_response = register_user(
+        client,
+        email="searchgroups@example.com",
+        name="Search Groups User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+    start_time = (datetime.now()).isoformat()
+    end_time = (datetime.now() + timedelta(seconds=10)).isoformat()
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id],
+        time_start=start_time,
+        time_end=end_time
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}/groups", query_string={
+        "gym_name": "Anytime Fitness Menai",
+        "time_start": start_time,
+        "time_end": end_time,
+    })
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert "groups" in data
+
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is not None
+    assert group["gym"] == "Anytime Fitness Menai"
+    assert group["time_start"] == start_time
+    assert group["time_end"] == end_time
+
+    member_names = [member["name"] for member in group["members"]]
+    assert "Search Groups User" in member_names
+
+
+def test_search_groups_does_not_return_wrong_gym(client):
+    register_response = register_user(
+        client,
+        email="wronggymsearch@example.com",
+        name="Wrong Gym Search User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    create_group(
+        client,
+        user_id=user_id,
+        members=[user_id]
+    )
+
+    response = client.get(f"/{user_id}/groups", query_string={
+        "gym_name": "Anytime Fitness Kingsford",
+        "time_start": "2026-06-01T17:00:00",
+        "time_end": "2026-06-01T20:00:00"
+    })
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["groups"] == []
+
+
+def test_search_groups_missing_gym_name(client):
+    register_response = register_user(
+        client,
+        email="missinggymname@example.com",
+        name="Missing Gym Name",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}/groups", query_string={
+        "time_start": "2026-06-01T17:00:00",
+        "time_end": "2026-06-01T20:00:00"
+    })
+
+    assert response.status_code in [400, 422]
+
+
+# -------------------------
+# Get current groups
+# -------------------------
+
+def test_get_current_groups_contains_joined_group(client):
+    register_response = register_user(
+        client,
+        email="currentgroups@example.com",
+        name="Current Groups User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id]
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    response = client.get(f"/{user_id}/groups/current")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert "groups" in data
+
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is not None
+    assert group["gym"] == "Anytime Fitness Menai"
+
+    member_names = [member["name"] for member in group["members"]]
+    assert "Current Groups User" in member_names
+
+
+def test_get_current_groups_empty_after_leaving(client):
+    register_response = register_user(
+        client,
+        email="emptycurrent@example.com",
+        name="Empty Current User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id]
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    client.put(f"/{user_id}/groups/{group_id}/leave")
+
+    response = client.get(f"/{user_id}/groups/current")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["groups"] == []
+
+
+# -------------------------
+# Get groups by gym
+# -------------------------
+
+def test_get_gym_groups_contains_created_group(client):
+    register_response = register_user(
+        client,
+        email="gymgroups@example.com",
+        name="Gym Groups User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    gym_data = create_gym(client, user_id).get_json()
+    gym_id = gym_data["gyms"][0]["id"]
+    gym_name = gym_data["gyms"][0]["name"]
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id],
+        gym=gym_name
+    )
+
+    group_id = create_response.get_json()["id"]
+    
+    response = client.get(f"/groups/{gym_id}")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert "groups" in data
+
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is not None
+    assert group["gym"] == gym_name
+    member_names = [member["name"] for member in group["members"]]
+    assert "Gym Groups User" in member_names
+
+
+def test_get_gym_groups_does_not_return_other_gyms(client):
+    register_response = register_user(
+        client,
+        email="othergymgroups@example.com",
+        name="Other Gym Groups User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    gym_data = create_gym(client, user_id).get_json()
+    gym_id = gym_data["gyms"][0]["id"]
+    create_group(
+        client,
+        user_id=user_id,
+        members=[user_id],
+        gym="Anytime Fitness Menai"
+    )
+    
+    response = client.get(f"/groups/{gym_id}")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["groups"] == []
+
+
+# -------------------------
+# Join group
+# -------------------------
+
+def test_join_group_modifies_members(client):
+    owner_response = register_user(
+        client,
+        email="owner@example.com",
+        name="Owner User",
+        password="password123",
+        age=21
+    )
+
+    joiner_response = register_user(
+        client,
+        email="joiner@example.com",
+        name="Joiner User",
+        password="password123",
+        age=22
+    )
+
+    owner_id = owner_response.get_json()["id"]
+    joiner_id = joiner_response.get_json()["id"]
+
+    create_gym(client, owner_response.get_json()["id"]).get_json()
+    create_response = create_group(
+        client,
+        user_id=owner_id,
+        members=[owner_id]
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    join_response = client.put(f"/{joiner_id}/groups/{group_id}", json={
+        "id": joiner_id,
+        "group_id": group_id
+    })
+
+    assert join_response.status_code in [200, 204]
+
+    current_response = client.get(f"/{joiner_id}/groups/current")
+
+    assert current_response.status_code == 200
+
+    data = current_response.get_json()
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is not None
+
+    member_names = [member["name"] for member in group["members"]]
+    assert "Owner User" in member_names
+    assert "Joiner User" in member_names
+
+def test_join_group_invalid_group_id(client):
+    register_response = register_user(
+        client,
+        email="badjoin@example.com",
+        name="Bad Join User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.put(f"/{user_id}/groups/999999", json={
+        "id": user_id,
+        "group_id": 999999
+    })
+
+    assert response.status_code in [400, 404]
+
+
+# -------------------------
+# Leave group
+# -------------------------
+
+def test_leave_group_modifies_members(client):
+    register_response = register_user(
+        client,
+        email="leaver@example.com",
+        name="Leave Group User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id]
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    leave_response = client.put(f"/{user_id}/groups/{group_id}/leave")
+
+    assert leave_response.status_code in [200, 204]
+
+    current_response = client.get(f"/{user_id}/groups/current")
+
+    data = current_response.get_json()
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is None
+
+
+def test_leave_group_invalid_group_id(client):
+    register_response = register_user(
+        client,
+        email="badleave@example.com",
+        name="Bad Leave User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.put(f"/{user_id}/groups/999999/leave")
+
+    assert response.status_code in [400, 404]
+
+
+# -------------------------
+# Delete group
+# -------------------------
+
+def test_delete_group_removes_group_from_user_search(client):
+    register_response = register_user(
+        client,
+        email="deletegroup@example.com",
+        name="Delete Group User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    start_time = (datetime.now()).isoformat()
+    end_time = (datetime.now() + timedelta(seconds=10)).isoformat()
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id],
+        time_start = start_time,
+        time_end = end_time
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    delete_response = client.delete(f"/{user_id}/groups/{group_id}")
+
+    assert delete_response.status_code in [200, 204]
+
+    search_response = client.get(f"/{user_id}/groups", query_string={
+        "gym_name": "Anytime Fitness Menai",
+        "time_start": start_time,
+        "time_end": end_time
+    })
+
+    data = search_response.get_json()
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is None
+
+
+def test_delete_group_removes_group_from_gym_groups(client):
+    register_response = register_user(
+        client,
+        email="deletegymgroup@example.com",
+        name="Delete Gym Group User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        members=[user_id]
+    )
+
+    group_id = create_response.get_json()["id"]
+
+    client.delete(f"/{user_id}/groups/{group_id}")
+
+    response = client.get("/groups/Anytime Fitness Menai")
+
+    data = response.get_json()
+    group = get_group_by_id(data["groups"], group_id)
+
+    assert group is None
+
+
+def test_delete_group_invalid_group_id(client):
+    register_response = register_user(
+        client,
+        email="baddelete@example.com",
+        name="Bad Delete User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    response = client.delete(f"/{user_id}/groups/999999")
+
+    assert response.status_code in [400, 404]
