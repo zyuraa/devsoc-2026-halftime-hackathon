@@ -45,7 +45,7 @@ export default function AuthForm({
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-900">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-black to-zinc-500">
       <h1 className="text-3xl font-bold text-white mb-6 text-centre">
         placeholder
       </h1>
@@ -53,6 +53,7 @@ export default function AuthForm({
       <form
         onSubmit={handleSubmit}
         className="bg-zinc-800 p-8 rounded-2xl shadow-lg w-96"
+
       >
         <h1 className="text-3xl font-bold text-white mb-6">
           {title}
@@ -64,6 +65,7 @@ export default function AuthForm({
 
           <input
             type="email"
+            placeholder="john.doe@gmail.com"
             value={email}
             onChange={(e) =>
               setEmail(e.target.value)
@@ -113,6 +115,7 @@ export default function AuthForm({
 
           <input
             type="password"
+            placeholder="••••••••"
             value={password}
             onChange={(e) =>
               setPassword(e.target.value)
@@ -124,7 +127,7 @@ export default function AuthForm({
         <div className="mb-3">
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg"
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white p-3 rounded-lg"
           >
             {buttonText}
           </button>
@@ -133,7 +136,7 @@ export default function AuthForm({
         <button 
           onClick={handleClick}
           type="button"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
+          className="w-full bg-gray-600 hover:bg-gray-400 text-white p-3 rounded-lg font-semibold transition"
         >
           {mode === "register" ? (
             <>
