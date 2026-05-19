@@ -9,8 +9,28 @@ users = [] #temp
 gyms = [] #temp
 ids = [] #temp
 
-# get groups from gym
 
+@app.route("<gym_id>/groups", methods=["GET"])
+# get groups from gym
+def get_gym_groups(gym_id):
+
+    for g in gyms:
+        if g.id == gym_id:
+            gym_groups = g.groups
+        return jsonify({"groups": [
+            {
+                "id": gr.id,
+                "gym": gr.gym,
+                "time_start": gr.time_start,
+                "time_end": gr.time_end,
+                "members": [
+                    {
+                        "name": m.name,
+                        "age": m.age
+                        }
+                            for m in gr.members
+                ]
+                } for gr in gym_groups]})
 
 @app.route("/<id>/groups/current", methods=["GET"])
 # get groups from user
