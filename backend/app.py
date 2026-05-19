@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from bakcend.models import User, Gym, Group
-from bakcend.services import generate_secure_userid, delete_group_after
-from bakcend.search import search_gyms
+from models import User, Gym, Group
+from services import generate_secure_userid, delete_group_after
+from search import search_gyms
 from datetime import datetime, timedelta
 
 
