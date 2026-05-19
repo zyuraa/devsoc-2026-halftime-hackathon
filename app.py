@@ -60,7 +60,7 @@ def getUserInfo(id):
             return jsonify({
                 "email": u.email,
                 "name": u.name,
-                "age": u.age
+                "age": u.age,
                 "gender": u.gender
                 })
     return jsonify({"message": "User not found!"}), 404
