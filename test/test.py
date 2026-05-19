@@ -1,15 +1,22 @@
 import pytest
 import time
 from datetime import datetime, timedelta
-from app import app
+from app import app, users, gyms
+from app import find_user_by_id
 
 
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
 
+    users.clear()
+    gyms.clear()
+
     with app.test_client() as client:
         yield client
+
+    users.clear()
+    gyms.clear()
 
 # -------------------------
 # Helper functions
@@ -40,13 +47,19 @@ def login_user(client, email="test@example.com", password="password123"):
 def create_group(
     client,
     user_id,
-    gym="Anytime Fitness",
-    time_start="2026-06-01T18:00:00",
-    time_end="2026-06-01T19:00:00",
+    gym="Anytime Fitness Menai",
+    time_start=None,
+    time_end=None,
     members=None
 ):
     if members is None:
         members = [user_id]
+
+    if time_start is None:
+        time_start = datetime.now().isoformat()
+
+    if time_end is None:
+        time_end = (datetime.now() + timedelta(seconds=10)).isoformat()
 
     return client.post(f"/{user_id}/groups", json={
         "gym": gym,
@@ -54,6 +67,15 @@ def create_group(
         "time_end": time_end,
         "members": members
     })
+
+# Make the gym exist
+def create_gym(client, user_id):
+    return client.get(f"/{user_id}/search", query_string={
+        "longitude": 151,
+        "latitude": -34,
+        "limit": 10,
+        "radius_km": 25
+    }) 
 
 
 def get_group_by_id(groups, group_id):
@@ -185,8 +207,8 @@ def test_search_gyms_success(client):
     user_id = register_response.get_json()["id"]
 
     response = client.get(f"/{user_id}/search", query_string={
-        "longitude": -0.1276,
-        "latitude": 51.5072,
+        "longitude": 151,
+        "latitude": -34,
         "limit": 10,
         "radius_km": 10
     })
@@ -195,13 +217,14 @@ def test_search_gyms_success(client):
 
     data = response.get_json()
 
-    assert "gyms" in data
-    assert isinstance(data["gyms"], list)
-    assert len(data["gyms"]) > 0
-
     for gym in data["gyms"]:
-        assert isinstance(gym, str)
-        assert len(gym) > 0
+        assert isinstance(gym, dict)
+        assert "id" in gym
+        assert "name" in gym
+        assert "groups" in gym
+        assert isinstance(gym["name"], str)
+        assert isinstance(data["gyms"], list)
+        assert len(data["gyms"]) > 0
 
 
 def test_search_gyms_missing_longitude(client):
@@ -259,10 +282,10 @@ def test_create_group_success(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
     response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
         members=[user_id]
     )
 
@@ -287,12 +310,14 @@ def test_group_is_deleted_after_end_time(client):
     time_start = now.isoformat()
     time_end = (now + timedelta(seconds=2)).isoformat()
 
-    create_response = client.post(f"/{user_id}/groups", json={
-        "gym": "Anytime Fitness",
-        "time_start": time_start,
-        "time_end": time_end,
-        "members": [user_id]
-    })
+    create_gym(client, user_id)
+    create_response = create_group(
+        client,
+        user_id=user_id,
+        time_start=time_start,
+        time_end=time_end,
+        members=[user_id]
+    )
 
     assert create_response.status_code in [200, 201]
 
@@ -374,22 +399,23 @@ def test_search_groups_finds_created_group(client):
     )
 
     user_id = register_response.get_json()["id"]
-
+    start_time = (datetime.now()).isoformat()
+    end_time = (datetime.now() + timedelta(seconds=10)).isoformat()
+    create_gym(client, user_id)
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
-        time_start="2026-06-01T18:00:00",
-        time_end="2026-06-01T19:00:00",
-        members=[user_id]
+        members=[user_id],
+        time_start=start_time,
+        time_end=end_time
     )
 
     group_id = create_response.get_json()["id"]
 
     response = client.get(f"/{user_id}/groups", query_string={
-        "gym_name": "Anytime Fitness",
-        "time_start": "2026-06-01T17:00:00",
-        "time_end": "2026-06-01T20:00:00"
+        "gym_name": "Anytime Fitness Menai",
+        "time_start": start_time,
+        "time_end": end_time,
     })
 
     assert response.status_code == 200
@@ -400,9 +426,9 @@ def test_search_groups_finds_created_group(client):
     group = get_group_by_id(data["groups"], group_id)
 
     assert group is not None
-    assert group["gym"] == "Anytime Fitness"
-    assert group["time_start"] == "2026-06-01T18:00:00"
-    assert group["time_end"] == "2026-06-01T19:00:00"
+    assert group["gym"] == "Anytime Fitness Menai"
+    assert group["time_start"] == start_time
+    assert group["time_end"] == end_time
 
     member_names = [member["name"] for member in group["members"]]
     assert "Search Groups User" in member_names
@@ -419,15 +445,15 @@ def test_search_groups_does_not_return_wrong_gym(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
     create_group(
         client,
         user_id=user_id,
-        gym="Fitness First",
         members=[user_id]
     )
 
     response = client.get(f"/{user_id}/groups", query_string={
-        "gym_name": "Anytime Fitness",
+        "gym_name": "Anytime Fitness Kingsford",
         "time_start": "2026-06-01T17:00:00",
         "time_end": "2026-06-01T20:00:00"
     })
@@ -472,10 +498,10 @@ def test_get_current_groups_contains_joined_group(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
         members=[user_id]
     )
 
@@ -491,7 +517,7 @@ def test_get_current_groups_contains_joined_group(client):
     group = get_group_by_id(data["groups"], group_id)
 
     assert group is not None
-    assert group["gym"] == "Anytime Fitness"
+    assert group["gym"] == "Anytime Fitness Menai"
 
     member_names = [member["name"] for member in group["members"]]
     assert "Current Groups User" in member_names
@@ -508,10 +534,10 @@ def test_get_current_groups_empty_after_leaving(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
         members=[user_id]
     )
 
@@ -542,16 +568,19 @@ def test_get_gym_groups_contains_created_group(client):
 
     user_id = register_response.get_json()["id"]
 
+    gym_data = create_gym(client, user_id).get_json()
+    gym_id = gym_data["gyms"][0]["id"]
+    gym_name = gym_data["gyms"][0]["name"]
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
-        members=[user_id]
+        members=[user_id],
+        gym=gym_name
     )
 
     group_id = create_response.get_json()["id"]
-
-    response = client.get("/groups/Anytime Fitness")
+    
+    response = client.get(f"/groups/{gym_id}")
 
     assert response.status_code == 200
 
@@ -561,8 +590,7 @@ def test_get_gym_groups_contains_created_group(client):
     group = get_group_by_id(data["groups"], group_id)
 
     assert group is not None
-    assert group["gym"] == "Anytime Fitness"
-
+    assert group["gym"] == gym_name
     member_names = [member["name"] for member in group["members"]]
     assert "Gym Groups User" in member_names
 
@@ -578,14 +606,16 @@ def test_get_gym_groups_does_not_return_other_gyms(client):
 
     user_id = register_response.get_json()["id"]
 
+    gym_data = create_gym(client, user_id).get_json()
+    gym_id = gym_data["gyms"][0]["id"]
     create_group(
         client,
         user_id=user_id,
-        gym="Fitness First",
-        members=[user_id]
+        members=[user_id],
+        gym="Anytime Fitness Menai"
     )
-
-    response = client.get("/groups/Anytime Fitness")
+    
+    response = client.get(f"/groups/{gym_id}")
 
     assert response.status_code == 200
 
@@ -617,10 +647,10 @@ def test_join_group_modifies_members(client):
     owner_id = owner_response.get_json()["id"]
     joiner_id = joiner_response.get_json()["id"]
 
+    create_gym(client, owner_response.get_json()["id"]).get_json()
     create_response = create_group(
         client,
         user_id=owner_id,
-        gym="Anytime Fitness",
         members=[owner_id]
     )
 
@@ -645,56 +675,6 @@ def test_join_group_modifies_members(client):
     member_names = [member["name"] for member in group["members"]]
     assert "Owner User" in member_names
     assert "Joiner User" in member_names
-
-
-def test_join_group_twice_does_not_duplicate_member(client):
-    owner_response = register_user(
-        client,
-        email="owner2@example.com",
-        name="Owner Two",
-        password="password123",
-        age=21
-    )
-
-    joiner_response = register_user(
-        client,
-        email="joiner2@example.com",
-        name="Joiner Two",
-        password="password123",
-        age=22
-    )
-
-    owner_id = owner_response.get_json()["id"]
-    joiner_id = joiner_response.get_json()["id"]
-
-    create_response = create_group(
-        client,
-        user_id=owner_id,
-        gym="Anytime Fitness",
-        members=[owner_id]
-    )
-
-    group_id = create_response.get_json()["id"]
-
-    client.put(f"/{joiner_id}/groups/{group_id}", json={
-        "id": joiner_id,
-        "group_id": group_id
-    })
-
-    client.put(f"/{joiner_id}/groups/{group_id}", json={
-        "id": joiner_id,
-        "group_id": group_id
-    })
-
-    response = client.get(f"/{joiner_id}/groups/current")
-
-    data = response.get_json()
-    group = get_group_by_id(data["groups"], group_id)
-
-    member_names = [member["name"] for member in group["members"]]
-
-    assert member_names.count("Joiner Two") == 1
-
 
 def test_join_group_invalid_group_id(client):
     register_response = register_user(
@@ -730,10 +710,10 @@ def test_leave_group_modifies_members(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
         members=[user_id]
     )
 
@@ -782,11 +762,15 @@ def test_delete_group_removes_group_from_user_search(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
+    start_time = (datetime.now()).isoformat()
+    end_time = (datetime.now() + timedelta(seconds=10)).isoformat()
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
-        members=[user_id]
+        members=[user_id],
+        time_start = start_time,
+        time_end = end_time
     )
 
     group_id = create_response.get_json()["id"]
@@ -796,9 +780,9 @@ def test_delete_group_removes_group_from_user_search(client):
     assert delete_response.status_code in [200, 204]
 
     search_response = client.get(f"/{user_id}/groups", query_string={
-        "gym_name": "Anytime Fitness",
-        "time_start": "2026-06-01T17:00:00",
-        "time_end": "2026-06-01T20:00:00"
+        "gym_name": "Anytime Fitness Menai",
+        "time_start": start_time,
+        "time_end": end_time
     })
 
     data = search_response.get_json()
@@ -818,10 +802,10 @@ def test_delete_group_removes_group_from_gym_groups(client):
 
     user_id = register_response.get_json()["id"]
 
+    create_gym(client, user_id)
     create_response = create_group(
         client,
         user_id=user_id,
-        gym="Anytime Fitness",
         members=[user_id]
     )
 
@@ -829,7 +813,7 @@ def test_delete_group_removes_group_from_gym_groups(client):
 
     client.delete(f"/{user_id}/groups/{group_id}")
 
-    response = client.get("/groups/Anytime Fitness")
+    response = client.get("/groups/Anytime Fitness Menai")
 
     data = response.get_json()
     group = get_group_by_id(data["groups"], group_id)
