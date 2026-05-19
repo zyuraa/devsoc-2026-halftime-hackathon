@@ -11,17 +11,10 @@ class User:
     self.gender = gender
 
 
-class Franchise(str, Enum):
-    ANYTIME_FITNESS = "Anytime Fitness"
-    FITNESS_FIRST = "Fitness First"
-    SNAP_FITNESS = "Snap Fitness"
-    PLUS_FITNESS = "Plus Fitness"
-    CLUB_LIME = "Club Lime"
-
-
 class Gym:
-    def __init__(self, name, latitude, longitude, franchise):
+    def __init__(self, id, name, latitude, longitude):
+        self.id = id
         self.name = name
         self.latitude = latitude
         self.longitude = longitude
-        self.franchise = franchise
+      
