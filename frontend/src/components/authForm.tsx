@@ -1,38 +1,47 @@
 type AuthFormProps = {
+  mode: AuthMode
   title: string;
   buttonText: string;
   onSubmit: (
     email: string,
-    password: string
+    password: string,
+    name?: string,
+    age?: string
   ) => void;
-  nav: string
 };
+
+type AuthMode = "login" | "register";
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function AuthForm({
+  mode,
   title,
   buttonText,
   onSubmit,
-  nav
 }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
 
   const handleSubmit = (
     e: React.SubmitEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
 
-    onSubmit(email, password);
+    onSubmit(email, name, age, password);
   };
 
   const navigate = useNavigate();
 
   const handleClick = () => {
-    /* change this!!! */
-    navigate(nav);
+    if (mode === "register") {
+      navigate("/login");
+    } else {
+      navigate("/register");
+    }
   }
 
 
@@ -63,6 +72,40 @@ export default function AuthForm({
             className="w-full p-3 rounded-lg bg-zinc-700 text-white"
           />
         </div>
+          
+        {mode === "register" && (
+          <>
+            <div className="mb-4">
+              <label className="block text-zinc-300 mb-2">
+                Name
+              </label>
+
+              <input
+                type="name"
+                value={name}
+                onChange={(e) =>
+                  setName(e.target.value)
+                }
+                className="w-full p-3 rounded-lg bg-zinc-700 text-white"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-zinc-300 mb-2">
+                Age
+              </label>
+
+              <input
+                type="age"
+                value={age}
+                onChange={(e) =>
+                  setAge(e.target.value)
+                }
+                className="w-full p-3 rounded-lg bg-zinc-700 text-white"
+              />
+            </div>
+          </>
+        )}
 
         <div className="mb-6">
           <label className="block text-zinc-300 mb-2">
@@ -90,9 +133,19 @@ export default function AuthForm({
 
         <button 
           onClick={handleClick}
+          type="button"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
         >
-          Login Instead
+          {mode === "register" ? (
+            <>
+              Have an account? Login
+            </>
+          ) : (
+            <>
+              Click here to Register
+            </>
+          )
+          }
         </button>
       </form>
     </div>

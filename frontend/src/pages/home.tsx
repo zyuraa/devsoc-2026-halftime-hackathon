@@ -31,9 +31,7 @@ export default function Home() {
 
       }
     }
-
     fetchUser();
-
   }, [id]);
 
   return (

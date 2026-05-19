@@ -35,10 +35,10 @@ export default function LoginPage() {
   return (
     <div>
       <AuthForm
+        mode="login"
         title="Login"
         buttonText="Sign In"
         onSubmit={loginUser}
-        nav='/register'
       />
     </div>
   );

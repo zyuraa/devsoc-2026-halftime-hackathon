@@ -36,10 +36,10 @@ export default function RegisterPage() {
   return (
     <div>
           <AuthForm
+            mode="register"
             title="Register"
             buttonText="Create Account"
             onSubmit={registerUser}
-            nav='/login'
           />
         </div>
   );
