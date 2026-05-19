@@ -91,7 +91,7 @@ export default function GymSearcher() {
 
   return (
     <div className="w-full h-screen relative">
-      <h2 className="text-left">
+      <h2 className="text-center">
         Enter location to search for gyms!
       </h2>
 
