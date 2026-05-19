@@ -69,11 +69,21 @@ def search_gyms(longitude, latitude, limit=10, radius_km=5):
                 id=feature["properties"].get("mapbox_id", ""),
                 name=feature["properties"].get("name", "Unknown"),
                 latitude=gym_lat,
-                longitude=gym_lon
+                longitude=gym_lon,
+                groups=[]
             )
 
             gyms.append(gym)
 
     return gyms
     
+# if __name__ == "__main__":
+#     gyms = search_gyms(
+#         longitude=151,
+#         latitude=-34,
+#         limit=10,
+#         radius_km=15
+#     )
 
+#     for gym in gyms:
+#         print(gym.id, gym.name, gym.latitude, gym.longitude)
