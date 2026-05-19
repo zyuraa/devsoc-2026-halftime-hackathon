@@ -66,8 +66,7 @@ def getUserInfo(id):
 # user searches for gyms
 @app.route("/<id>/groups", methods=["GET"])
 # user searches for groups
-# input: gym name
-# e, time range
+# input: gym name, time start, time end
 # output: list of groups matching the criteria
 def search_groups(id):
     gym_name = request.args.get("gym_name")
