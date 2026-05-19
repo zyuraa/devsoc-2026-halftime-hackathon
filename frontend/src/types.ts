@@ -1,15 +1,3 @@
-export type AuthFormProps = {
-  mode: AuthMode;
-  title: string;
-  buttonText: string;
-  onSubmit: (
-    email: string,
-    password: string,
-    name?: string,
-    age?: string
-  ) => void;
-};
-
 export type AuthMode = "login" | "register";
 
 

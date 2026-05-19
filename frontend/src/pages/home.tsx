@@ -2,12 +2,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import GymSearcher from "../components/gymSearcher";
 import type { User } from "../types";
+import ProfileDropdown from "../components/profileDropdown";
 
 export default function HomePage() {
 
   const { id } = useParams();
 
   const [user, setUser] = useState<User | null>(null);
+
+
 
   useEffect(() => {
     const fetchUser = async() => {
@@ -39,14 +42,26 @@ export default function HomePage() {
   return (
     <div>
       <h1>Welcome</h1>
-      <p>{user?.email}</p>
+      <p>{user?.name}</p>
+      <div className="fixed top-5 right-5">
+        {user && (
+          <ProfileDropdown
+            name={user.name}
+            email={user.email}
+          />
+        )}
+    </div>
+      <ProfileDropdown
+        name={user?.name ?? ""}
+        email={user?.email ?? ""}
+      />
       <GymSearcher/>
       <button 
         onClick={handleClick}
         type="button"
         className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
       >
-        Your Groups
+        View Your Groups
       </button>
     </div>
   );
