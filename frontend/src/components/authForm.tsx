@@ -45,15 +45,14 @@ export default function AuthForm({
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-black to-zinc-500">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-stone-100">
       <h1 className="text-3xl font-bold text-white mb-6 text-centre">
         placeholder
       </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-zinc-800 p-8 rounded-2xl shadow-lg w-96"
-
+        className="bg-white p-8 rounded-2xl shadow-lg w-96"
       >
         <h1 className="text-3xl font-bold mb-6">
           {title}
@@ -127,7 +126,7 @@ export default function AuthForm({
         <div className="mb-20">
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-700 text-white p-3 rounded-lg"
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
           >
             {buttonText}
           </button>
@@ -148,7 +147,7 @@ export default function AuthForm({
         <button 
           onClick={handleClick}
           type="button"
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg"
+          className="w-full bg-gray-400 hover:bg-gray-600 text-white p-3 rounded-lg"
         >
           {mode === "register" ? (
             <>
