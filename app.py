@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from models.py import User
+from models.py import User, Gym
 
 app = Flask(__name__)
 db = [] #temp
