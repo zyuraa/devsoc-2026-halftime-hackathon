@@ -40,7 +40,7 @@ export default function HomePage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen flex items-center justify-center bg-stone-100">
       <h1>Welcome</h1>
       <p>{user?.name}</p>
       <div className="fixed top-5 right-60">
@@ -55,7 +55,7 @@ export default function HomePage() {
       <button 
         onClick={handleClick}
         type="button"
-        className="w-100 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg mb-30 font-semibold transition"
+        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg"
       >
         View Your Groups
       </button>

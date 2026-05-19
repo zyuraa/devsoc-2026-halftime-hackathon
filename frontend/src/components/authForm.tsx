@@ -45,20 +45,20 @@ export default function AuthForm({
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-900">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-stone-100">
       <h1 className="text-3xl font-bold text-white mb-6 text-centre">
         placeholder
       </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-zinc-800 p-8 rounded-2xl shadow-lg w-96"
+        className="bg-white p-8 rounded-2xl shadow-lg w-96"
       >
-        <h1 className="text-3xl font-bold text-white mb-6">
+        <h1 className="text-3xl font-bold mb-6">
           {title}
         </h1>
         <div className="mb-4">
-          <label className="block text-zinc-300 mb-2">
+          <label className="block mb-2">
             Email
           </label>
 
@@ -75,7 +75,7 @@ export default function AuthForm({
         {mode === "register" && (
           <>
             <div className="mb-4">
-              <label className="block text-zinc-300 mb-2">
+              <label className="block mb-2">
                 Name
               </label>
 
@@ -90,7 +90,7 @@ export default function AuthForm({
             </div>
 
             <div className="mb-4">
-              <label className="block text-zinc-300 mb-2">
+              <label className="block mb-2">
                 Age
               </label>
 
@@ -107,7 +107,7 @@ export default function AuthForm({
         )}
 
         <div className="mb-6">
-          <label className="block text-zinc-300 mb-2">
+          <label className="block mb-2">
             Password
           </label>
 
@@ -121,27 +121,39 @@ export default function AuthForm({
           />
         </div>
 
-        <div className="mb-3">
+        <div className="mb-20">
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-semibold transition"
           >
             {buttonText}
           </button>
         </div>
 
+        <div>
+          {mode === "register" ? (
+              <>
+                Have an account?
+              </>
+            ) : (
+              <>
+                Create an account
+              </>
+            )
+          }
+        </div>
         <button 
           onClick={handleClick}
           type="button"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg"
         >
           {mode === "register" ? (
             <>
-              Have an account? Login
+              Login
             </>
           ) : (
             <>
-              Click here to Register
+              Register
             </>
           )
           }

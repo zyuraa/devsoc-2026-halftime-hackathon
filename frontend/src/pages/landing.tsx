@@ -8,7 +8,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-stone-100">
       <h1>
         WELCOME TO PLACEHOLDER
       </h1>
