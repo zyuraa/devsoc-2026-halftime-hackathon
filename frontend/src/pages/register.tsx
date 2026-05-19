@@ -1,6 +1,8 @@
 import AuthForm from '../components/authForm';
+import { useNavigate } from 'react-router-dom';
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
 
   const registerUser = async (
     email: string,
@@ -22,10 +24,14 @@ export default function RegisterPage() {
       const data = await response.json();
 
       console.log("Server response:", data);
+
+      if (response.ok) {
+        navigate("/home/${data.id}");
+      }
     } catch (error) {
       console.error("Error:", error);
     }
-  };
+  }
 
   return (
     <div>

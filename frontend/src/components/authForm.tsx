@@ -89,11 +89,11 @@ export default function AuthForm({
         </div>
 
         <button 
-              onClick={handleClick}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
-            >
-              Login Instead
-            </button>
+          onClick={handleClick}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
+        >
+          Login Instead
+        </button>
       </form>
     </div>
   );
