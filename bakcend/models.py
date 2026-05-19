@@ -13,11 +13,11 @@ class User:
 
 
 class Gym:
-    def __init__(self, name, latitude, longitude, franchise):
+    def __init__(self, name, latitude, longitude, groups):
         self.name = name
         self.latitude = latitude
         self.longitude = longitude
-        self.franchise = franchise
+        self.groups = groups
 
 class Group:
     def __init__(self, id, gym, time_start, time_end, members):
