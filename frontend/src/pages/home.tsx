@@ -43,23 +43,19 @@ export default function HomePage() {
     <div>
       <h1>Welcome</h1>
       <p>{user?.name}</p>
-      <div className="fixed top-5 right-5">
-        {user && (
-          <ProfileDropdown
-            name={user.name}
-            email={user.email}
-          />
-        )}
-    </div>
-      <ProfileDropdown
-        name={user?.name ?? ""}
-        email={user?.email ?? ""}
-      />
-      <GymSearcher/>
+      <div className="fixed top-5 right-60">
+        <ProfileDropdown
+          name={user?.name ?? ""}
+          email={user?.email ?? ""}
+        />
+      </div> 
+      <div className="">
+        <GymSearcher/>
+      </div>
       <button 
         onClick={handleClick}
         type="button"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
+        className="w-100 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg mb-30 font-semibold transition"
       >
         View Your Groups
       </button>
