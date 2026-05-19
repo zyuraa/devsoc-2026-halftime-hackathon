@@ -21,6 +21,7 @@ def register():
     )
     users.append(user)
     return jsonify({"id": user.id, "message": "success"})
+
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -63,10 +64,10 @@ def getUserInfo(id):
                 "age": u.age
                 })
     return jsonify({"message": "User not found!"}), 404
-# user searches for gyms
+
 @app.route("/<id>/groups", methods=["GET"])
 # user searches for groups
-# input: gym name, time range
+# input: gym name, time start, time end
 # output: list of groups matching the criteria
 def search_groups(id):
     gym_name = request.args.get("gym_name")
@@ -82,6 +83,7 @@ def search_groups(id):
 
 @app.route("/<id>/groups", methods=["POST"])
 def create_group():
+    # user creates a group
     data = request.get_json()
     # Add group creation logic here
     group = Group(
@@ -99,7 +101,6 @@ def create_group():
             
         
     return jsonify({"message": "Gym not found!"}), 404
-# user creates a group
 
 @app.route("/<id>/groups/<group_id>", methods=["PUT"])
 # user joins a group

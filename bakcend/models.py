@@ -10,14 +10,13 @@ class User:
     self.age = age
     self.id = id
 
-
 class Gym:
-    def __init__(self, id, name, latitude, longitude, groups=[]):
+    def __init__(self, id, name, latitude, longitude, groups=None):
         self.id = id
         self.name = name
         self.latitude = latitude
         self.longitude = longitude
-        self.groups = groups
+        self.groups = groups if groups is not None else []
 
 class Group:
     def __init__(self, id, gym, time_start, time_end, members):
