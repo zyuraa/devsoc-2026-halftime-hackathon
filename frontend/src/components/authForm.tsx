@@ -45,7 +45,7 @@ export default function AuthForm({
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-stone-100">
+    <div className="min-h-screen flex flex-col bg-stone-100">
       <h1 className="text-3xl font-bold text-white mb-6 text-centre">
         placeholder
       </h1>
@@ -124,7 +124,7 @@ export default function AuthForm({
         <div className="mb-20">
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-semibold transition"
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
           >
             {buttonText}
           </button>

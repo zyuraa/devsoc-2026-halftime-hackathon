@@ -35,12 +35,12 @@ export default function RegisterPage() {
 
   return (
     <div>
-          <AuthForm
-            mode="register"
-            title="Register"
-            buttonText="Create Account"
-            onSubmit={registerUser}
-          />
-        </div>
+        <AuthForm
+          mode="register"
+          title="Register"
+          buttonText="Create Account"
+          onSubmit={registerUser}
+        />
+      </div>
   );
 }
