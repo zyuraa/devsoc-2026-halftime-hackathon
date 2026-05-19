@@ -11,14 +11,33 @@ MAPBOX_ACCESS_TOKEN = os.getenv("MAPBOX_ACCESS_TOKEN")
 if not MAPBOX_ACCESS_TOKEN:
     raise ValueError("MAPBOX_ACCESS_TOKEN is not set")
 
-def search_gyms(longitude, latitude, limit, radius_km):
+
+def search_gyms(longitude, latitude, limit=10, radius_km=5):
+    """
+    Searches for gyms near a given coordinate using the Mapbox Search Box API.
+
+    Parameters:
+        longitude (float): Longitude of the search centre.
+            Example: 131.2433
+
+        latitude (float): Latitude of the search centre.
+            Example: -23.8438
+
+        limit (int, optional): Maximum number of results to request from Mapbox, capped at 10.
+
+        radius_km (float, optional): Maximum distance from the given coordinate,
+            in kilometres.
+
+    Returns:
+        list[Gym]: A list of Gym objects within radius_km of the given coordinate.
+    """
 
     url = "https://api.mapbox.com/search/searchbox/v1/forward"
 
     params = {
         "q": "gym",
         "proximity": f"{longitude},{latitude}",
-        "limit": limit,
+        "limit": min(limit, 10),
         "access_token": MAPBOX_ACCESS_TOKEN
     }
 
