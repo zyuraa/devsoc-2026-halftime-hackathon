@@ -76,13 +76,13 @@ def search_gyms(longitude, latitude, limit=10, radius_km=5):
 
     return gyms
     
-if __name__ == "__main__":
-    gyms = search_gyms(
-        longitude=151,
-        latitude=-34,
-        limit=10,
-        radius_km=15
-    )
+# if __name__ == "__main__":
+#     gyms = search_gyms(
+#         longitude=151,
+#         latitude=-34,
+#         limit=10,
+#         radius_km=15
+#     )
 
-    for gym in gyms:
-        print(gym.id, gym.name, gym.latitude, gym.longitude)
+#     for gym in gyms:
+#         print(gym.id, gym.name, gym.latitude, gym.longitude)
