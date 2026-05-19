@@ -1,4 +1,6 @@
 import pytest
+import time
+from datetime import datetime, timedelta
 from app import app
 
 
@@ -200,7 +202,7 @@ def test_search_gyms_success(client):
     for gym in data["gyms"]:
         assert isinstance(gym, str)
         assert len(gym) > 0
-        
+
 
 def test_search_gyms_missing_longitude(client):
     register_response = register_user(
@@ -269,6 +271,53 @@ def test_create_group_success(client):
     data = response.get_json()
     assert "id" in data
     assert data["id"] is not None
+
+def test_group_is_deleted_after_end_time(client):
+    register_response = register_user(
+        client,
+        email="autodelete@example.com",
+        name="Auto Delete User",
+        password="password123",
+        age=20
+    )
+
+    user_id = register_response.get_json()["id"]
+
+    now = datetime.now()
+    time_start = now.isoformat()
+    time_end = (now + timedelta(seconds=2)).isoformat()
+
+    create_response = client.post(f"/{user_id}/groups", json={
+        "gym": "Anytime Fitness",
+        "time_start": time_start,
+        "time_end": time_end,
+        "members": [user_id]
+    })
+
+    assert create_response.status_code in [200, 201]
+
+    group_id = create_response.get_json()["id"]
+
+    # Immediately after creation, the group should exist
+    current_response = client.get(f"/{user_id}/groups/current")
+    assert current_response.status_code == 200
+
+    current_data = current_response.get_json()
+    group = get_group_by_id(current_data["groups"], group_id)
+
+    assert group is not None
+
+    # Wait until after the group's end time
+    time.sleep(3)
+
+    # After the end time, the group should be gone
+    current_response = client.get(f"/{user_id}/groups/current")
+    assert current_response.status_code == 200
+
+    current_data = current_response.get_json()
+    group = get_group_by_id(current_data["groups"], group_id)
+
+    assert group is None
 
 
 def test_create_group_missing_gym(client):
