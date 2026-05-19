@@ -30,7 +30,7 @@ export default function AuthForm({
   ) => {
     e.preventDefault();
 
-    onSubmit(email, name, age, password);
+    onSubmit(email, password, name, age);
   };
 
   const navigate = useNavigate();

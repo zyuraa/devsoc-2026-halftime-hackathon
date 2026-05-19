@@ -7,8 +7,8 @@ export default function RegisterPage() {
   const registerUser = async (
     email: string,
     password: string,
-    age: string = "",
-    name: string = ""
+    name: string = "",
+    age: string = ""
   ) => {
 
     try {

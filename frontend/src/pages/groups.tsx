@@ -38,7 +38,7 @@ export default function GroupPage() {
         <p>No groups found.</p>
       ) : (
         groups.map((group, index) => (
-          <div key={index} style={{ marginBottom: "1rem" }}>
+          <div key={index} className="p-4 rounded-lg bg-blue-500">
             <p>{group.gym}</p>
 
             <p>
