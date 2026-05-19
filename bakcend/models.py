@@ -13,7 +13,7 @@ class User:
 
 
 class Gym:
-    def __init__(self, id, name, latitude, longitude, groups):
+    def __init__(self, id, name, latitude, longitude, groups=[]):
         self.id = id
         self.name = name
         self.latitude = latitude
