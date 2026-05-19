@@ -26,7 +26,7 @@ export default function RegisterPage() {
       console.log("Server response:", data);
 
       if (response.ok) {
-        navigate("/home/${data.id}");
+        navigate(`/${data.id}/home`);
       }
     } catch (error) {
       console.error("Error:", error);

@@ -23,7 +23,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        navigate("/home/${data.id}");
+        navigate(`/${data.id}/home`);
       }
 
       console.log("Server response:", data);

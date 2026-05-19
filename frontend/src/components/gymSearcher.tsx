@@ -8,7 +8,8 @@ import type { MapMouseEvent } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 import { SearchBox } from "@mapbox/search-js-react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import type { Gym } from "../types";
 
 const MAPBOX_TOKEN: string = import.meta.env.VITE_API_KEY ?? "";
 
@@ -16,16 +17,15 @@ export default function GymSearcher() {
 
   const { id } = useParams();
 
-  const mapRef = useRef<MapRef>(null);
+  const [gyms, setGyms] = useState<Gym[]>([]);
 
-  // default location
+  // map variables to pass to mapbox api
+  const mapRef = useRef<MapRef>(null);
   const [marker, setMarker] = useState({
     latitude: -33.8688,
     longitude: 151.2093,
   });
-
   const [radius, setRadius] = useState(10);
-
   const [numGyms, setNumGyms] = useState(5);
 
   // set location to physical
@@ -74,6 +74,7 @@ export default function GymSearcher() {
       });
 
       const data = await response.json();
+      setGyms(data);
 
       console.log("Server response:", data);
 
@@ -81,6 +82,12 @@ export default function GymSearcher() {
       console.error("Error:", error);
     }
   }
+
+  const navigate = useNavigate();
+
+  const selectGym = (gymId: string) => {
+    navigate(`/home/${id}/gyms/${gymId}`);
+  };
 
   return (
     <div className="w-full h-screen relative">
@@ -189,6 +196,30 @@ export default function GymSearcher() {
       >
         Get Gyms
       </button>
+
+      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+      <h2>Select a Gym</h2>
+
+      {gyms.map((gym) => (
+        <div
+          key={gym.id}
+          onClick={() => selectGym(gym.id)}
+          style={{
+            padding: "12px",
+            margin: "8px 0",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            cursor: "pointer",
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          <h3>{gym.name}</h3>
+          {/* {gym.groups !== undefined && (
+            <p>{gym.groups.length} groups available</p>
+          )} */}
+        </div>
+      ))}
+    </div>
 
     </div>
   );

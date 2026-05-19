@@ -1,19 +1,6 @@
-type AuthFormProps = {
-  mode: AuthMode
-  title: string;
-  buttonText: string;
-  onSubmit: (
-    email: string,
-    password: string,
-    name?: string,
-    age?: string
-  ) => void;
-};
-
-type AuthMode = "login" | "register";
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { AuthFormProps } from "../types";
 
 export default function AuthForm({
   mode,
